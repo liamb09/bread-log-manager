@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <script>
+      function updateDocumentFormat() {
+        var selection = document.getElementById("action-choice").value;
+        if (selection == "new-recipe") {
+          document.getElementById("recipe-input-container").innerHTML = `
+            <label for="recipe-name-input">Recipe name</label><br />
+            <input name="recipe-name-input" type="text" id="recipe-name-input" />
+            <br />
+            <label for="recipe-description-input">Recipe description</label><br />
+            <input name="recipe-description-input" type="text" id="recipe-description-input" />
+            <br />
+            <label for="start-date-input">Start date</label><br />
+            <input name="start-date-input" type="date" id="start-date-input" />
+            <br />
+            <label for="recipe-sections-input">Recipe sections</label><br />
+            <textarea name="recipe-sections-input" type="text" id="recipe-sections-input" rows="4"></textarea>
+          `;
+        } else if (selection == "recipe-section") {
+          document.getElementById("recipe-input-container").innerHTML = `
+            <label for="recipe-name-input">Recipe name</label><br />
+            <input name="recipe-name-input" type="text" id="recipe-name-input" />
+            <br />
+            <label for="recipe-section-input">Recipe section</label><br />
+            <input name="recipe-section-input" type="text" id="recipe-section-input" />
+            <br /><br />
+            <label for="recipe-subtitle-input">Subtitle</label><br />
+            <textarea name="recipe-subtitle-input" type="text" id="recipe-subtitle-input" rows="2"></textarea>
+            <br />
+            <input name="ingredients-checkbox" type="checkbox" id="ingredients-checkbox" onchange="updateIngredientsInput()" />
+            <label for="ingredients-input">Ingredients</label><br />
+            <textarea name="ingredients-input" type="text" id="ingredients-input" rows="4" hidden></textarea>
+            <br />
+            <label for="steps-input">Steps</label><br />
+            <textarea name="steps-input" type="text" id="steps-input" rows="4"></textarea>
+            <br />
+            <label for="notes-input">Notes</label><br />
+            <textarea name="notes-input" type="text" id="notes-input" rows="4"></textarea>
+          `;
+
+          updateIngredientsInput()
+        }
+      }
+
+      function addEntry() {
+        var selection = document.getElementById("action-choice").value;
+        var recipeName = document.getElementById("recipe-name-input").value;
+        if (selection == "new-recipe") {
+          const startDate = document.getElementById("start-date-input").value.split("-")
+          const startDateFormatted = `${startDate[1]}/${startDate[2]}/${startDate[0].substring(2)}`;
+          const jsonData = {
+            recipeName: recipeName,
+            startDate: startDateFormatted,
+            description: document.getElementById("recipe-description-input").value,
+            sections: document.getElementById("recipe-sections-input").value
+          };
+          google.script.run.addEntry(selection, JSON.stringify(jsonData));
+          document.body.innerHTML = `<p>Recipe "${recipeName}" has been added to the log.</p>`;
+        } else if (selection == "recipe-section") {
+          const jsonData = {
+            recipeName: recipeName,
+            section: document.getElementById("recipe-section-input").value,
+            subtitle: document.getElementById("recipe-subtitle-input").value,
+            ingredients: document.getElementById("ingredients-checkbox").checked ? document.getElementById("ingredients-input").value : "",
+            steps: document.getElementById("steps-input").value,
+            notes: document.getElementById("notes-input").value
+          };
+          google.script.run.addEntry(selection, JSON.stringify(jsonData));
+          document.body.innerHTML = `<p>"${document.getElementById("recipe-section-input").value}" of "${recipeName}" has been added to the log.</p>`;
+        }
+      }
+
+      function updateIngredientsInput () {
+        if (document.getElementById("ingredients-checkbox").checked) {
+          document.getElementById("ingredients-input").removeAttribute("hidden");
+        } else {
+          document.getElementById("ingredients-input").setAttribute("hidden", "true");
+        }
+      }
+    </script>
+    <style>
+      * {
+        text-align: center;
+      }
+
+      html {
+        font-size: 16px;
+      }
+
+      body {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 75%;
+      }
+
+      input, textarea, select {
+        text-align: left;
+        border-radius: 0.25rem;
+        border: 1px solid black;
+        padding: 0.25rem;
+        margin-bottom: 0.5rem;
+      }
+
+      #add-button {
+        width: 10rem;
+        height: 2rem;
+        text-align: center;
+        font-weight: bold;
+      }
+
+      @media (max-width: 400px) {
+        html {
+          font-size: 15px;
+        }
+
+        input, textarea, select {
+          margin-bottom: 0.15rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Bread Log Manager</h1>
+
+    <label for="action-choice">Choose an action: </label>
+    <select name="action-choice" id="action-choice" onchange="updateDocumentFormat()">
+      <option value="new-recipe">New recipe</option>
+      <option value="recipe-section">Recipe section</option>
+    </select>
+    <br /><br />
+
+    <div id="recipe-input-container">
+      <label for="recipe-name-input">Recipe name</label><br />
+      <input name="recipe-name-input" type="text" id="recipe-name-input" />
+      <br />
+      <label for="recipe-description-input">Recipe description</label><br />
+      <input name="recipe-description-input" type="text" id="recipe-description-input" />
+      <br />
+      <label for="start-date-input">Start date</label><br />
+      <input name="start-date-input" type="date" id="start-date-input" />
+      <br />
+      <label for="recipe-sections-input">Recipe sections</label><br />
+      <textarea name="recipe-sections-input" type="text" id="recipe-sections-input" rows="4"></textarea>
+    </div>
+
+    <br /><br />
+    <input type="button" id="add-button" value="Add" onclick="addEntry()">
+    <!-- <p id="test">before</p> -->
+  </body>
+</html>
+
