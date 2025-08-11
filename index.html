@@ -7,41 +7,67 @@
         var selection = document.getElementById("action-choice").value;
         if (selection == "new-recipe") {
           document.getElementById("recipe-input-container").innerHTML = `
-            <label for="recipe-name-input">Recipe name</label><br />
+            <label for="recipe-name-input">Recipe Name</label><br />
             <input name="recipe-name-input" type="text" id="recipe-name-input" />
             <br />
-            <label for="recipe-description-input">Recipe description</label><br />
+            <label for="recipe-description-input">Recipe Description</label><br />
             <input name="recipe-description-input" type="text" id="recipe-description-input" />
             <br />
-            <label for="start-date-input">Start date</label><br />
+            <label for="start-date-input">Start Date</label><br />
             <input name="start-date-input" type="date" id="start-date-input" />
             <br />
-            <label for="recipe-sections-input">Recipe sections</label><br />
+            <label for="recipe-sections-input">Recipe Sections</label><br />
             <textarea name="recipe-sections-input" type="text" id="recipe-sections-input" rows="4"></textarea>
           `;
         } else if (selection == "recipe-section") {
           document.getElementById("recipe-input-container").innerHTML = `
-            <label for="recipe-name-input">Recipe name</label><br />
+            <label for="recipe-name-input">Recipe Name</label><br />
             <input name="recipe-name-input" type="text" id="recipe-name-input" />
             <br />
-            <label for="recipe-section-input">Recipe section</label><br />
+            <label for="recipe-section-input">Recipe Section</label><br />
             <input name="recipe-section-input" type="text" id="recipe-section-input" />
             <br /><br />
+
             <label for="recipe-subtitle-input">Subtitle</label><br />
             <textarea name="recipe-subtitle-input" type="text" id="recipe-subtitle-input" rows="2"></textarea>
             <br />
             <input name="ingredients-checkbox" type="checkbox" id="ingredients-checkbox" onchange="updateIngredientsInput()" />
             <label for="ingredients-input">Ingredients</label><br />
-            <textarea name="ingredients-input" type="text" id="ingredients-input" rows="4" hidden></textarea>
+            <div id="ingredients-input-container" hidden>
+              <textarea name="ingredients-input" type="text" id="ingredients-input" rows="4"></textarea>
+            </div>
             <br />
+            <input name="steps-checkbox" type="checkbox" id="steps-checkbox" onchange="updateStepsInput()" />
+            <label for="steps-input">Steps</label><br />
+            <div id="steps-input-container" hidden>
+              <textarea name="steps-input" type="text" id="steps-input" rows="4"></textarea><br />
+              <input name="later-steps-checkbox" type="checkbox" id="later-steps-checkbox" />
+              <label for="later-steps-checkbox">Add steps later</label>
+            </div>
+            <br />
+            <input name="notes-checkbox" type="checkbox" id="notes-checkbox" onchange="updateNotesInput()" />
+            <label for="notes-input">Notes</label><br />
+            <div id="notes-input-container" hidden>
+              <textarea name="notes-input" type="text" id="notes-input" rows="4"></textarea><br />
+              <input name="later-notes-checkbox" type="checkbox" id="later-notes-checkbox" />
+              <label for="later-notes-checkbox">Add notes later</label>
+            </div>
+          `;
+        } else if (selection == "add-steps-or-notes") {
+          document.getElementById("recipe-input-container").innerHTML = `
+            <label for="recipe-name-input">Recipe Name</label><br />
+            <input name="recipe-name-input" type="text" id="recipe-name-input" />
+            <br />
+            <label for="recipe-section-input">Recipe Section</label><br />
+            <input name="recipe-section-input" type="text" id="recipe-section-input" />
+            <br /><br />
+
             <label for="steps-input">Steps</label><br />
             <textarea name="steps-input" type="text" id="steps-input" rows="4"></textarea>
             <br />
             <label for="notes-input">Notes</label><br />
             <textarea name="notes-input" type="text" id="notes-input" rows="4"></textarea>
           `;
-
-          updateIngredientsInput()
         }
       }
 
@@ -58,26 +84,53 @@
             sections: document.getElementById("recipe-sections-input").value
           };
           google.script.run.addEntry(selection, JSON.stringify(jsonData));
-          document.body.innerHTML = `<p>Recipe "${recipeName}" has been added to the log.</p>`;
+          alert(`Recipe "${recipeName}" has been added to the log.`);
         } else if (selection == "recipe-section") {
           const jsonData = {
             recipeName: recipeName,
             section: document.getElementById("recipe-section-input").value,
             subtitle: document.getElementById("recipe-subtitle-input").value,
             ingredients: document.getElementById("ingredients-checkbox").checked ? document.getElementById("ingredients-input").value : "",
-            steps: document.getElementById("steps-input").value,
-            notes: document.getElementById("notes-input").value
+            steps: document.getElementById("steps-checkbox").checked ? document.getElementById("steps-input").value : "",
+            notes: document.getElementById("notes-checkbox").checked ? document.getElementById("notes-input").value : "",
+            stepsLater: document.getElementById("steps-checkbox").checked && document.getElementById("later-steps-checkbox").checked,
+            notesLater: document.getElementById("notes-checkbox").checked && document.getElementById("later-notes-checkbox").checked
           };
           google.script.run.addEntry(selection, JSON.stringify(jsonData));
-          document.body.innerHTML = `<p>"${document.getElementById("recipe-section-input").value}" of "${recipeName}" has been added to the log.</p>`;
+          alert(`"${document.getElementById("recipe-section-input").value}" of "${recipeName}" has been added to the log.`);
+        } else if (selection == "add-steps-or-notes") {
+          const jsonData = {
+            recipeName: recipeName,
+            section: document.getElementById("recipe-section-input").value,
+            steps: document.getElementById("steps-input").value,
+            notes: document.getElementById("notes-input").value,
+          };
+          google.script.run.addEntry(selection, JSON.stringify(jsonData));
+          alert(`"${document.getElementById("recipe-section-input").value}" of "${recipeName}" has been appended in the log.`);
         }
       }
 
       function updateIngredientsInput () {
         if (document.getElementById("ingredients-checkbox").checked) {
-          document.getElementById("ingredients-input").removeAttribute("hidden");
+          document.getElementById("ingredients-input-container").removeAttribute("hidden");
         } else {
-          document.getElementById("ingredients-input").setAttribute("hidden", "true");
+          document.getElementById("ingredients-input-container").setAttribute("hidden", "true");
+        }
+      }
+
+      function updateStepsInput () {
+        if (document.getElementById("steps-checkbox").checked) {
+          document.getElementById("steps-input-container").removeAttribute("hidden");
+        } else {
+          document.getElementById("steps-input-container").setAttribute("hidden", "true");
+        }
+      }
+
+      function updateNotesInput () {
+        if (document.getElementById("notes-checkbox").checked) {
+          document.getElementById("notes-input-container").removeAttribute("hidden");
+        } else {
+          document.getElementById("notes-input-container").setAttribute("hidden", "true");
         }
       }
     </script>
@@ -92,9 +145,9 @@
 
       body {
         position: fixed;
-        top: 50%;
+        /* top: 50%; */
         left: 50%;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, 0%);
         width: 75%;
       }
 
@@ -127,24 +180,25 @@
   <body>
     <h1>Bread Log Manager</h1>
 
-    <label for="action-choice">Choose an action: </label>
+    <label for="action-choice">Entry Type</label><br />
     <select name="action-choice" id="action-choice" onchange="updateDocumentFormat()">
-      <option value="new-recipe">New recipe</option>
-      <option value="recipe-section">Recipe section</option>
+      <option value="new-recipe">Recipe Entry</option>
+      <option value="recipe-section">Section Entry</option>
+      <option value="add-steps-or-notes">Extra Steps & Notes Entry</option>
     </select>
     <br /><br />
 
     <div id="recipe-input-container">
-      <label for="recipe-name-input">Recipe name</label><br />
+      <label for="recipe-name-input">Recipe Name</label><br />
       <input name="recipe-name-input" type="text" id="recipe-name-input" />
       <br />
-      <label for="recipe-description-input">Recipe description</label><br />
+      <label for="recipe-description-input">Recipe Description</label><br />
       <input name="recipe-description-input" type="text" id="recipe-description-input" />
       <br />
-      <label for="start-date-input">Start date</label><br />
+      <label for="start-date-input">Start Date</label><br />
       <input name="start-date-input" type="date" id="start-date-input" />
       <br />
-      <label for="recipe-sections-input">Recipe sections</label><br />
+      <label for="recipe-sections-input">Recipe Sections</label><br />
       <textarea name="recipe-sections-input" type="text" id="recipe-sections-input" rows="4"></textarea>
     </div>
 

@@ -1,5 +1,5 @@
 function doGet(e) {
-  return HtmlService.createHtmlOutputFromFile("EntryPage").addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  return HtmlService.createHtmlOutputFromFile("index").addMetaTag("viewport", "width=device-width, initial-scale=1");
 }
 
 function addEntry(selection, d) {
@@ -27,13 +27,13 @@ function addEntry(selection, d) {
     var currentElementIndex = body.getChildIndex(sectionElement.getParent());
 
     // add subtitle
-    if (data.subtitle != '') {
+    if (data.subtitle != "") {
       sectionElement.insertText(0, `${data.subtitle}`);
       currentElementIndex++;
     }
     
     // add table
-    if (data.ingredients != '') {
+    if (data.ingredients != "") {
       var ingredientsTable = [["Ingredient", "Mass"]];
       data.ingredients.split("\n").forEach(function(line) {
         ingredientsTable.push(line.split("."));
@@ -56,25 +56,30 @@ function addEntry(selection, d) {
 
       for (var row = 1; row < ingredientsTable.getNumRows(); row++) {
         for (var col = 0; col < ingredientsTable.getRow(0).getNumCells(); col++) {
-          Logger.log(`${row},${col}`);
           ingredientsTable.getRow(row).getCell(col).editAsText().setBold(false);
         }
       }
     }
 
     // add steps
-    if (data.steps != '') {
+    if (data.steps != "") {
       // add steps header
       sectionElement = body.insertParagraph(currentElementIndex, "").editAsText();
       sectionElement.appendText("Steps");
       sectionElement.setBold(0, 4, true);
-      if (data.ingredients != '') {
+      if (data.ingredients != "") {
         sectionElement.insertText(0, "\n");
       }
       currentElementIndex++;
 
-      // add steps list
-      data.steps.split("\n").forEach(function (step) {
+      // add later steps placeholder if applicable
+      var steps = data.steps.split("\n");
+      if (data.stepsLater) {
+        steps.push(`{${data.recipeName}-Later Steps}`);
+      }
+
+      // add steps numbered list to doc
+      steps.forEach(function (step) {
         const listItem = body.insertListItem(currentElementIndex, step);
         listItem.setGlyphType(DocumentApp.GlyphType.NUMBER);
 
@@ -86,7 +91,7 @@ function addEntry(selection, d) {
     }
 
     // add notes
-    const onlyNotes = (data.subtitle == '' && data.ingredients == '' && data.steps == '');
+    const onlyNotes = (data.subtitle == "" && data.ingredients == "" && data.steps == "");
     if (!onlyNotes) {
       sectionElement = body.insertParagraph(currentElementIndex, "").editAsText();
       sectionElement.appendText("\nNotes");
@@ -94,9 +99,17 @@ function addEntry(selection, d) {
       currentElementIndex++;
     }
 
-    if (data.notes != '') {
+    if (data.notes != "" || data.notesLater) {
+      var notes = data.notes.split("\n");
+      if (data.notes == "" && data.notesLater) {
+        notes.shift();
+      }
+      if (data.notesLater) {
+        notes.push(`{${data.recipeName}-Later Notes}`)
+      }
+
       // add notes list
-      data.notes.split("\n").forEach(function (note) {
+      notes.forEach(function (note) {
         const listItem = body.insertListItem(currentElementIndex, note);
         listItem.setGlyphType(DocumentApp.GlyphType.NUMBER);
 
@@ -107,6 +120,45 @@ function addEntry(selection, d) {
       });
     } else {
       sectionElement.appendText("\nNone").setBold(sectionElement.getText().length-4, sectionElement.getText().length-1, false);
+    }
+  } else if (selection == "add-steps-or-notes") {
+    if (data.steps != "") {
+      // Remove placeholder and determine starting point for extra steps
+      const sectionIdentifier = `{${data.recipeName}-Later Steps}`;
+      const searchResult = body.findText(sectionIdentifier);
+      const sectionElement = searchResult.getElement().editAsText();
+      var currentElementIndex = body.getChildIndex(sectionElement.getParent()) + 1;
+      body.replaceText(sectionIdentifier, data.steps.split("\n")[0]);
+
+      // add extra steps
+      data.steps.split("\n").slice(1).forEach(function (step) {
+        const listItem = body.insertListItem(currentElementIndex, step);
+        listItem.setGlyphType(DocumentApp.GlyphType.NUMBER);
+
+        const listItemText = listItem.asListItem().editAsText();
+        listItemText.setFontFamily("Times New Roman");
+        listItemText.setBold(false);
+        currentElementIndex++;
+      });
+    }
+    if (data.notes != "") {
+      // Remove placeholder and determine starting point for extra notes
+      const sectionIdentifier = `{${data.recipeName}-Later Notes}`;
+      const searchResult = body.findText(sectionIdentifier);
+      const sectionElement = searchResult.getElement().editAsText();
+      var currentElementIndex = body.getChildIndex(sectionElement.getParent()) + 1;
+      body.replaceText(sectionIdentifier, data.notes.split("\n")[0]);
+
+      // add extra notes
+      data.notes.split("\n").slice(1).forEach(function (note) {
+        const listItem = body.insertListItem(currentElementIndex, note);
+        listItem.setGlyphType(DocumentApp.GlyphType.NUMBER);
+
+        const listItemText = listItem.asListItem().editAsText();
+        listItemText.setFontFamily("Times New Roman");
+        listItemText.setBold(false);
+        currentElementIndex++;
+      });
     }
   }
 }
